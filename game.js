@@ -73,17 +73,23 @@ function createScene() {
 
 
     // ========================================
-    // GROUND
+    // WORLD GROUND
     // ========================================
 
+    // Main grass ground
     const ground = BABYLON.MeshBuilder.CreateGround(
         "ground",
         {
-            width: 100,
-            height: 100
+            width: 120,
+            height: 120
         },
         scene
     );
+
+
+    // ========================================
+    // GRASS MATERIAL
+    // ========================================
 
     const groundMaterial = new BABYLON.StandardMaterial(
         "groundMaterial",
@@ -97,45 +103,191 @@ function createScene() {
 
 
     // ========================================
-    // TEST ROCK
+    // MAIN DIRT PATH
     // ========================================
 
-    const rock = BABYLON.MeshBuilder.CreateSphere(
-        "rock",
+    const path = BABYLON.MeshBuilder.CreateGround(
+        "mainPath",
         {
-            diameter: 3
+            width: 8,
+            height: 120
         },
         scene
     );
 
-    rock.position = new BABYLON.Vector3(5, 1.5, 5);
+    path.position.y = 0.01;
 
 
     // ========================================
-    // TEST TREE
+    // STARTING CLEARING
     // ========================================
 
-    const trunk = BABYLON.MeshBuilder.CreateCylinder(
-        "treeTrunk",
+    const clearing = BABYLON.MeshBuilder.CreateDisc(
+        "startingClearing",
         {
-            height: 5,
-            diameter: 1
+            radius: 10,
+            tessellation: 48
         },
         scene
     );
 
-    trunk.position = new BABYLON.Vector3(-5, 2.5, 5);
+    clearing.rotation.x = Math.PI / 2;
+
+    clearing.position.y = 0.02;
 
 
-    const leaves = BABYLON.MeshBuilder.CreateSphere(
-        "treeLeaves",
-        {
-            diameter: 5
-        },
+    // ========================================
+    // CLEARING MATERIAL
+    // ========================================
+
+    const clearingMaterial = new BABYLON.StandardMaterial(
+        "clearingMaterial",
         scene
     );
 
-    leaves.position = new BABYLON.Vector3(-5, 6, 5);
+    clearingMaterial.diffuseColor =
+        new BABYLON.Color3(0.32, 0.60, 0.28);
+
+    clearing.material = clearingMaterial;
+
+
+    // ========================================
+    // PATH MATERIAL
+    // ========================================
+
+    const pathMaterial = new BABYLON.StandardMaterial(
+        "pathMaterial",
+        scene
+    );
+
+    pathMaterial.diffuseColor =
+        new BABYLON.Color3(0.45, 0.30, 0.18);
+
+    path.material = pathMaterial;
+    // ========================================
+    // WORLD OBJECTS
+    // ========================================
+
+    // ========================================
+    // ROCK FUNCTION
+    // ========================================
+
+    function createRock(x, z, size = 1) {
+
+        const rock = BABYLON.MeshBuilder.CreateSphere(
+            "rock",
+            {
+                diameter: 2
+            },
+            scene
+        );
+
+        rock.position = new BABYLON.Vector3(
+            x,
+            size,
+            z
+        );
+
+        rock.scaling = new BABYLON.Vector3(
+            size,
+            size * 0.7,
+            size
+        );
+
+        return rock;
+    }
+
+
+    // ========================================
+    // TREE FUNCTION
+    // ========================================
+
+    function createTree(x, z, size = 1) {
+
+        // Tree trunk
+        const trunk = BABYLON.MeshBuilder.CreateCylinder(
+            "treeTrunk",
+            {
+                height: 5,
+                diameter: 1
+            },
+            scene
+        );
+
+        trunk.position = new BABYLON.Vector3(
+            x,
+            2.5 * size,
+            z
+        );
+
+        trunk.scaling = new BABYLON.Vector3(
+            size,
+            size,
+            size
+        );
+
+
+        // Tree leaves
+        const leaves = BABYLON.MeshBuilder.CreateSphere(
+            "treeLeaves",
+            {
+                diameter: 5
+            },
+            scene
+        );
+
+        leaves.position = new BABYLON.Vector3(
+            x,
+            6 * size,
+            z
+        );
+
+        leaves.scaling = new BABYLON.Vector3(
+            size,
+            size,
+            size
+        );
+
+        return {
+            trunk: trunk,
+            leaves: leaves
+        };
+    }
+
+
+    // ========================================
+    // PLACE ROCKS
+    // ========================================
+
+    createRock(-12, 8, 1.2);
+    createRock(14, 10, 0.8);
+    createRock(-15, -8, 1);
+    createRock(15, -12, 1.3);
+    createRock(-18, 2, 0.7);
+    createRock(18, 4, 1);
+
+
+    // ========================================
+    // PLACE TREES
+    // ========================================
+
+    // Left side of the clearing
+    createTree(-14, 12, 1.2);
+    createTree(-18, 7, 0.9);
+    createTree(-16, -2, 1.1);
+    createTree(-20, -8, 1.3);
+
+    // Right side of the clearing
+    createTree(14, 13, 1);
+    createTree(18, 8, 1.2);
+    createTree(16, -3, 0.9);
+    createTree(20, -9, 1.1);
+
+    // Far background
+    createTree(-10, 22, 1.3);
+    createTree(10, 24, 1.1);
+    createTree(-20, 18, 0.9);
+    createTree(20, 20, 1.2);
 
 
     // ========================================
@@ -204,10 +356,15 @@ function createScene() {
             if (scene.animationGroups.length > 0) {
 
                 scene.animationGroups.forEach(function (animationGroup) {
+
+                    console.log("🎬 Animation:", animationGroup.name);
+
                     animationGroup.stop();
+
                 });
 
                 console.log("🛑 Warrior animations stopped.");
+
             }
             if (meshes.length === 0) {
 
@@ -303,7 +460,61 @@ function createScene() {
         }
     );
 
+    // ========================================
+    // COMBAT INPUT
+    // ========================================
 
+    let isAttacking = false;
+
+    canvas.addEventListener("pointerdown", function (event) {
+
+        if (event.button === 0) {
+
+            // Don't start another attack while attacking
+            if (isAttacking) {
+                return;
+            }
+
+            isAttacking = true;
+
+            console.log("⚔️ SWORD SLASH!");
+
+            // Find the sword attack animation
+            const attackAnimation =
+                scene.getAnimationGroupByName(
+                    "CharacterArmature|Sword_Slash"
+                );
+
+            if (attackAnimation) {
+
+                attackAnimation.stop();
+
+                attackAnimation.play(false);
+
+                console.log("🗡️ Sword Slash animation playing!");
+
+                // Wait until animation finishes
+                attackAnimation.onAnimationGroupEndObservable.addOnce(
+                    function () {
+
+                        isAttacking = false;
+
+                        console.log("✅ Attack finished!");
+
+                    }
+                );
+
+            } else {
+
+                console.log("❌ Sword Slash animation not found!");
+
+                isAttacking = false;
+
+            }
+
+        }
+
+    });
     const walkSpeed = 0.12;
     const runSpeed = 0.24;
 
