@@ -539,6 +539,11 @@ function createScene() {
 
         if (event.button === 0) {
 
+            // Don't attack after player is defeated
+            if (playerDefeated) {
+                return;
+            }
+
             // Don't start another attack while attacking
             if (isAttacking) {
                 return;
