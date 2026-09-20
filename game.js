@@ -810,10 +810,24 @@ function createScene() {
 
                     playerHealth -= 10;
 
+                    // Don't let HP go below 0
+                    if (playerHealth < 0) {
+                        playerHealth = 0;
+                    }
+
                     console.log(
                         "👹 ENEMY ATTACK! Player HP:",
                         playerHealth
                     );
+
+                    // Player defeated
+                    if (playerHealth <= 0) {
+
+                        console.log("💀 PLAYER DEFEATED!");
+
+                        playerHealth = 0;
+
+                    }
 
                     enemyAttackCooldown = 60;
                 }
