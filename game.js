@@ -1,3 +1,4 @@
+console.log("GAME.JS IS RUNNING");
 // ========================================
 // SERAVELLE: THE LOST LEGENDS
 // VERSION 1
@@ -18,6 +19,7 @@ const engine = new BABYLON.Engine(canvas, true);
 function createScene() {
 
     const scene = new BABYLON.Scene(engine);
+
 
     // ========================================
     // SKY
@@ -55,6 +57,8 @@ function createScene() {
     camera.inertia = 0.8;
 
     camera.wheelDeltaPercentage = 0.01;
+
+
     // ========================================
     // LIGHT
     // ========================================
@@ -135,7 +139,7 @@ function createScene() {
 
 
     // ========================================
-    // PLAYER
+    // PLAYER CONTROLLER
     // ========================================
 
     const player = BABYLON.MeshBuilder.CreateCapsule(
@@ -162,19 +166,142 @@ function createScene() {
     player.material = playerMaterial;
 
 
+    // Hide the capsule.
+    // It is only used as the movement controller.
+    player.isVisible = false;
+
+
+    // ========================================
+    // WARRIOR ROOT
+    // ========================================
+
+    const warriorRoot = new BABYLON.TransformNode(
+        "warriorRoot",
+        scene
+    );
+
+    warriorRoot.position.copyFrom(player.position);
+
+
+    // ========================================
+    // LOAD WARRIOR MODEL
+    // ========================================
+
+    BABYLON.SceneLoader.ImportMesh(
+        "",
+        "assets/models/",
+        "warrior.glb",
+        scene,
+
+        function (meshes) {
+
+            console.log("✅ WARRIOR MODEL LOADED!");
+            console.log("Meshes:", meshes);
+            // ========================================
+            // STOP WARRIOR ANIMATIONS
+            // ========================================
+
+            if (scene.animationGroups.length > 0) {
+
+                scene.animationGroups.forEach(function (animationGroup) {
+                    animationGroup.stop();
+                });
+
+                console.log("🛑 Warrior animations stopped.");
+            }
+            if (meshes.length === 0) {
+
+                console.log(
+                    "❌ Model loaded but contains no meshes."
+                );
+
+                player.isVisible = true;
+
+                return;
+            }
+
+
+            // ========================================
+            // ATTACH ONLY ROOT-LEVEL MESHES
+            // ========================================
+            //
+            // We do NOT re-parent every mesh.
+            // This keeps the GLB's internal hierarchy intact.
+            //
+
+            meshes.forEach(function (mesh) {
+
+                if (mesh.parent === null) {
+
+                    mesh.parent = warriorRoot;
+
+                }
+
+            });
+
+
+            // ========================================
+            // MAKE MODEL VISIBLE
+            // ========================================
+
+            meshes.forEach(function (mesh) {
+
+                mesh.isVisible = true;
+
+            });
+
+
+            console.log("✅ Warrior attached to warriorRoot!");
+        },
+
+
+        null,
+
+
+        // ========================================
+        // LOADING ERROR
+        // ========================================
+
+        function (scene, message, exception) {
+
+            console.log(
+                "❌ WARRIOR MODEL FAILED TO LOAD!"
+            );
+
+            console.log(message);
+            console.log(exception);
+
+            // Show capsule if model fails.
+            player.isVisible = true;
+        }
+    );
+
+
     // ========================================
     // PLAYER MOVEMENT
     // ========================================
 
     const keys = {};
 
-    window.addEventListener("keydown", function (event) {
-        keys[event.key.toLowerCase()] = true;
-    });
 
-    window.addEventListener("keyup", function (event) {
-        keys[event.key.toLowerCase()] = false;
-    });
+    window.addEventListener(
+        "keydown",
+        function (event) {
+
+            keys[event.key.toLowerCase()] = true;
+
+        }
+    );
+
+
+    window.addEventListener(
+        "keyup",
+        function (event) {
+
+            keys[event.key.toLowerCase()] = false;
+
+        }
+    );
 
 
     const walkSpeed = 0.12;
@@ -187,12 +314,21 @@ function createScene() {
 
     scene.onBeforeRenderObservable.add(function () {
 
+
+        // ========================================
+        // SPEED
+        // ========================================
+
         let speed = walkSpeed;
+
 
         // Hold SHIFT to run
         if (keys["shift"]) {
+
             speed = runSpeed;
+
         }
+
 
         // ========================================
         // CAMERA-RELATIVE MOVEMENT
@@ -201,22 +337,36 @@ function createScene() {
         let moveX = 0;
         let moveZ = 0;
 
-        // Forward / backward
+
+        // Forward
         if (keys["w"]) {
+
             moveZ += 1;
+
         }
 
+
+        // Backward
         if (keys["s"]) {
+
             moveZ -= 1;
+
         }
 
-        // Left / right
+
+        // Left
         if (keys["a"]) {
+
             moveX -= 1;
+
         }
 
+
+        // Right
         if (keys["d"]) {
+
             moveX += 1;
+
         }
 
 
@@ -226,40 +376,69 @@ function createScene() {
 
         if (moveX !== 0 || moveZ !== 0) {
 
-            // Get camera's forward direction
-            const forward = camera.getForwardRay().direction;
 
-            // Keep movement on the ground
+            // Get camera forward direction
+            const forward =
+                camera.getForwardRay().direction;
+
+
+            // Keep movement on ground
             forward.y = 0;
+
             forward.normalize();
 
-            // Get camera's right direction
+
+            // Get camera right direction
             const right = new BABYLON.Vector3(
                 forward.z,
                 0,
                 -forward.x
             );
 
+
             // Calculate movement direction
-            const direction = forward.scale(moveZ)
-                .add(right.scale(moveX));
+            const direction =
+                forward.scale(moveZ)
+                    .add(right.scale(moveX));
+
 
             direction.normalize();
 
-            // Move player
+
+            // Move player controller
             player.position.addInPlace(
                 direction.scale(speed)
             );
 
-            // Turn player toward movement direction
-            player.rotation.y = Math.atan2(
-                direction.x,
-                direction.z
-            );
+
+            // Turn player toward movement
+            player.rotation.y =
+                Math.atan2(
+                    direction.x,
+                    direction.z
+                );
+
         }
 
-        // Camera follows player
+
+        // ========================================
+        // WARRIOR FOLLOWS PLAYER
+        // ========================================
+
+        warriorRoot.position.copyFrom(
+            player.position
+        );
+
+        warriorRoot.rotation.y =
+            player.rotation.y;
+
+
+        // ========================================
+        // CAMERA FOLLOWS PLAYER
+        // ========================================
+
         camera.target = player.position;
+
     });
 
 
@@ -273,8 +452,11 @@ function createScene() {
 
 const scene = createScene();
 
+
 engine.runRenderLoop(function () {
+
     scene.render();
+
 });
 
 
@@ -282,6 +464,13 @@ engine.runRenderLoop(function () {
 // RESIZE
 // ========================================
 
-window.addEventListener("resize", function () {
-    engine.resize();
-});
+window.addEventListener(
+    "resize",
+    function () {
+
+        engine.resize();
+
+    }
+);
+
+
