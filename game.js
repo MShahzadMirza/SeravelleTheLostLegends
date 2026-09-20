@@ -32,21 +32,29 @@ function createScene() {
 
 
     // ========================================
-    // CAMERA
+    // THIRD-PERSON CAMERA
     // ========================================
 
     const camera = new BABYLON.ArcRotateCamera(
         "camera",
         -Math.PI / 2,
         Math.PI / 3,
-        25,
+        10,
         new BABYLON.Vector3(0, 1, 0),
         scene
     );
 
     camera.attachControl(canvas, true);
 
+    camera.lowerRadiusLimit = 6;
+    camera.upperRadiusLimit = 14;
 
+    camera.lowerBetaLimit = 0.7;
+    camera.upperBetaLimit = 1.4;
+
+    camera.inertia = 0.8;
+
+    camera.wheelDeltaPercentage = 0.01;
     // ========================================
     // LIGHT
     // ========================================
