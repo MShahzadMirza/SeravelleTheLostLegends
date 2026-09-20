@@ -194,22 +194,68 @@ function createScene() {
             speed = runSpeed;
         }
 
+        // ========================================
+        // CAMERA-RELATIVE MOVEMENT
+        // ========================================
+
+        let moveX = 0;
+        let moveZ = 0;
+
         // Forward / backward
         if (keys["w"]) {
-            player.position.z += speed;
+            moveZ += 1;
         }
 
         if (keys["s"]) {
-            player.position.z -= speed;
+            moveZ -= 1;
         }
 
         // Left / right
         if (keys["a"]) {
-            player.position.x -= speed;
+            moveX -= 1;
         }
 
         if (keys["d"]) {
-            player.position.x += speed;
+            moveX += 1;
+        }
+
+
+        // ========================================
+        // MOVE RELATIVE TO CAMERA
+        // ========================================
+
+        if (moveX !== 0 || moveZ !== 0) {
+
+            // Get camera's forward direction
+            const forward = camera.getForwardRay().direction;
+
+            // Keep movement on the ground
+            forward.y = 0;
+            forward.normalize();
+
+            // Get camera's right direction
+            const right = new BABYLON.Vector3(
+                forward.z,
+                0,
+                -forward.x
+            );
+
+            // Calculate movement direction
+            const direction = forward.scale(moveZ)
+                .add(right.scale(moveX));
+
+            direction.normalize();
+
+            // Move player
+            player.position.addInPlace(
+                direction.scale(speed)
+            );
+
+            // Turn player toward movement direction
+            player.rotation.y = Math.atan2(
+                direction.x,
+                direction.z
+            );
         }
 
         // Camera follows player
