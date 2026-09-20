@@ -56,6 +56,7 @@ function createScene() {
 
     let playerHealth = 100;
     let enemyAttackCooldown = 0;
+    let playerDefeated = false;
 
     console.log("❤️ Enemy HP:", enemyHealth);
 
@@ -627,6 +628,21 @@ function createScene() {
 
     scene.onBeforeRenderObservable.add(function () {
 
+        // ========================================
+        // UPDATE PLAYER HEALTH UI
+        // ========================================
+
+        const playerHealthText =
+            document.getElementById("playerHealthText");
+
+        const playerHealthFill =
+            document.getElementById("playerHealthFill");
+
+        playerHealthText.textContent =
+            "❤️ HP: " + playerHealth + " / 100";
+
+        playerHealthFill.style.width =
+            playerHealth + "%";
 
         // ========================================
         // SPEED
@@ -687,7 +703,7 @@ function createScene() {
         // MOVE RELATIVE TO CAMERA
         // ========================================
 
-        if (moveX !== 0 || moveZ !== 0) {
+        if (!playerDefeated && (moveX !== 0 || moveZ !== 0)) {
 
 
             // Get camera forward direction
@@ -804,7 +820,7 @@ function createScene() {
             // ENEMY ATTACK
             // ========================================
 
-            if (enemyDistance <= stopDistance) {
+            if (!playerDefeated && enemyDistance <= stopDistance) {
 
                 if (enemyAttackCooldown <= 0) {
 
@@ -823,9 +839,10 @@ function createScene() {
                     // Player defeated
                     if (playerHealth <= 0) {
 
-                        console.log("💀 PLAYER DEFEATED!");
-
                         playerHealth = 0;
+                        playerDefeated = true;
+
+                        console.log("💀 PLAYER DEFEATED!");
 
                     }
 
