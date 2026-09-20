@@ -572,6 +572,20 @@ function createScene() {
                     "💥 ENEMY HIT! HP:",
                     enemyHealth
                 );
+
+                // ========================================
+                // ENEMY HIT FLASH
+                // ========================================
+
+                enemy.material.diffuseColor =
+                    new BABYLON.Color3(1, 1, 1);
+
+                setTimeout(function () {
+
+                    enemy.material.diffuseColor =
+                        new BABYLON.Color3(0.7, 0.1, 0.1);
+
+                }, 100);
                 // ========================================
                 // ENEMY DEFEATED
                 // ========================================
@@ -584,8 +598,23 @@ function createScene() {
 
                     console.log("👹 ENEMY DEFEATED!");
 
-                }
+                    // ========================================
+                    // ENEMY RESPAWN
+                    // ========================================
 
+                    setTimeout(function () {
+
+                        enemyHealth = 100;
+
+                        enemy.position.set(0, 1, 5);
+
+                        enemy.setEnabled(true);
+
+                        console.log("👹 ENEMY RESPAWNED!");
+
+                    }, 3000);
+
+                }
             }
             // Find the sword attack animation
             const attackAnimation =
@@ -855,7 +884,35 @@ function createScene() {
                         "👹 ENEMY ATTACK! Player HP:",
                         playerHealth
                     );
+                    // ========================================
+                    // PLAYER HIT FLASH
+                    // ========================================
 
+                    warriorRoot.getChildMeshes().forEach(function (mesh) {
+
+                        if (mesh.material) {
+
+                            mesh.material.emissiveColor =
+                                new BABYLON.Color3(1, 0.1, 0.1);
+
+                        }
+
+                    });
+
+                    setTimeout(function () {
+
+                        warriorRoot.getChildMeshes().forEach(function (mesh) {
+
+                            if (mesh.material) {
+
+                                mesh.material.emissiveColor =
+                                    new BABYLON.Color3(0, 0, 0);
+
+                            }
+
+                        });
+
+                    }, 120);
                     // Player defeated
                     if (playerHealth <= 0) {
 
