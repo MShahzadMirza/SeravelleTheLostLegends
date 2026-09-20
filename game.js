@@ -20,6 +20,44 @@ function createScene() {
 
     const scene = new BABYLON.Scene(engine);
 
+    // ========================================
+    // FIRST ENEMY
+    // ========================================
+
+    let enemy = BABYLON.MeshBuilder.CreateBox(
+        "enemy",
+        {
+            width: 1.5,
+            height: 2,
+            depth: 1.5
+        },
+        scene
+    );
+
+    enemy.position = new BABYLON.Vector3(0, 1, 5);
+
+    let enemyMaterial = new BABYLON.StandardMaterial(
+        "enemyMaterial",
+        scene
+    );
+
+    enemyMaterial.diffuseColor =
+        new BABYLON.Color3(0.7, 0.1, 0.1);
+
+    enemy.material = enemyMaterial;
+
+    console.log("👹 ENEMY CREATED!");
+
+    // ========================================
+    // ENEMY HEALTH
+    // ========================================
+
+    let enemyHealth = 100;
+
+    let playerHealth = 100;
+    let enemyAttackCooldown = 0;
+
+    console.log("❤️ Enemy HP:", enemyHealth);
 
     // ========================================
     // SKY
@@ -349,6 +387,36 @@ function createScene() {
 
             console.log("✅ WARRIOR MODEL LOADED!");
             console.log("Meshes:", meshes);
+
+
+            // ========================================
+            // CHECK WARRIOR MESH HEIGHT
+            // ========================================
+
+            let lowestPoint = Infinity;
+            let highestPoint = -Infinity;
+
+            meshes.forEach(function (mesh) {
+
+                const bounds = mesh.getBoundingInfo().boundingBox;
+
+                const minY = bounds.minimumWorld.y;
+                const maxY = bounds.maximumWorld.y;
+
+                if (minY < lowestPoint) {
+                    lowestPoint = minY;
+                }
+
+                if (maxY > highestPoint) {
+                    highestPoint = maxY;
+                }
+
+            });
+
+            console.log("🧍 Warrior lowest point:", lowestPoint);
+            console.log("🧍 Warrior highest point:", highestPoint);
+
+
             // ========================================
             // STOP WARRIOR ANIMATIONS
             // ========================================
@@ -478,7 +546,41 @@ function createScene() {
             isAttacking = true;
 
             console.log("⚔️ SWORD SLASH!");
+            // ========================================
+            // CHECK ENEMY HIT
+            // ========================================
 
+            const distanceToEnemy =
+                BABYLON.Vector3.Distance(
+                    player.position,
+                    enemy.position
+                );
+
+            console.log("📏 Distance to enemy:", distanceToEnemy);
+
+            if (distanceToEnemy <= 3) {
+
+                enemyHealth -= 25;
+
+                console.log(
+                    "💥 ENEMY HIT! HP:",
+                    enemyHealth
+                );
+                // ========================================
+                // ENEMY DEFEATED
+                // ========================================
+
+                if (enemyHealth <= 0) {
+
+                    enemyHealth = 0;
+
+                    enemy.setEnabled(false);
+
+                    console.log("👹 ENEMY DEFEATED!");
+
+                }
+
+            }
             // Find the sword attack animation
             const attackAnimation =
                 scene.getAnimationGroupByName(
@@ -635,11 +737,11 @@ function createScene() {
         // ========================================
         // WARRIOR FOLLOWS PLAYER
         // ========================================
-
-        warriorRoot.position.copyFrom(
-            player.position
+        warriorRoot.position.set(
+            player.position.x,
+            0,
+            player.position.z
         );
-
         warriorRoot.rotation.y =
             player.rotation.y;
 
@@ -650,12 +752,89 @@ function createScene() {
 
         camera.target = player.position;
 
-    });
+        // ========================================
+        // ENEMY AI - FOLLOW PLAYER
+        // ========================================
 
+        if (enemy.isEnabled()) {
+
+            const enemyDirection =
+                player.position.subtract(enemy.position);
+
+            enemyDirection.y = 0;
+
+            const enemyDistance =
+                enemyDirection.length();
+
+            console.log("👹 Enemy distance:", enemyDistance);
+
+            // ========================================
+            // ENEMY STOP DISTANCE
+            // ========================================
+
+            const stopDistance = 2.5;
+
+            // Only move if enemy is outside stopping distance
+            if (enemyDistance > stopDistance) {
+
+                enemyDirection.normalize();
+
+                const enemySpeed = 0.03;
+
+                const distanceToMove =
+                    Math.min(
+                        enemySpeed,
+                        enemyDistance - stopDistance
+                    );
+
+                enemy.position.x +=
+                    enemyDirection.x * distanceToMove;
+
+                enemy.position.z +=
+                    enemyDirection.z * distanceToMove;
+
+                enemy.rotation.y =
+                    Math.atan2(
+                        enemyDirection.x,
+                        enemyDirection.z
+                    );
+
+            }
+            // ========================================
+            // ENEMY ATTACK
+            // ========================================
+
+            if (enemyDistance <= stopDistance) {
+
+                if (enemyAttackCooldown <= 0) {
+
+                    playerHealth -= 10;
+
+                    console.log(
+                        "👹 ENEMY ATTACK! Player HP:",
+                        playerHealth
+                    );
+
+                    enemyAttackCooldown = 60;
+                }
+
+            }
+            // ========================================
+            // ATTACK COOLDOWN
+            // ========================================
+
+            if (enemyAttackCooldown > 0) {
+
+                enemyAttackCooldown--;
+
+            }
+
+        }
+
+    });
 
     return scene;
 }
-
 
 // ========================================
 // START GAME
