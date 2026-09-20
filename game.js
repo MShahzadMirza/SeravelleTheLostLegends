@@ -650,6 +650,21 @@ function createScene() {
             playerHealth + "%";
 
         // ========================================
+        // UPDATE ENEMY HEALTH UI
+        // ========================================
+
+        const enemyHealthText =
+            document.getElementById("enemyHealthText");
+
+        const enemyHealthFill =
+            document.getElementById("enemyHealthFill");
+
+        enemyHealthText.textContent =
+            "👹 HP: " + enemyHealth + " / 100";
+
+        enemyHealthFill.style.width =
+            enemyHealth + "%";
+        // ========================================
         // SPEED
         // ========================================
 
